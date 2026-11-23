@@ -18,3 +18,16 @@ End-to-end ETL data pipeline and SQL analytics project exploring popular movies 
 3. Install dependencies: `pip install -r requirements.txt`
 4. Run `python download.py` and place the CSV into the `data/` folder.
 5. Run `python etl.py` to populate the database.
+
+## Key Insights
+Based on the SQL analysis of the 2026 TMDB dataset:
+
+| Media Type | Total Titles | Average Rating | Average Popularity |
+| :--- | :---: | :---: | :---: |
+| **Movie** | `466` | `7.06` | `44.09` |
+| **TV Show** | `522` | `7.57` | `71.55` |
+
+* **Rating Trends:** TV shows maintain a higher average viewer rating (`7.57` vs. `7.06`) and higher average popularity compared to movies.
+* **Top Performers:** The highest-rated title with over 500 votes is the TV show *Teach You a Lesson*.
+* **Language Dominance:** English-language productions account for the vast majority of popular releases in the catalog.
+
