@@ -1,4 +1,4 @@
--- 1. Filmek és sorozatok összehasonlítása (darabszám, átlagos értékelés, népszerűség)
+-- 1. Compare movies vs. TV shows (count, average rating, average popularity)
 SELECT
     t.type_name AS media_type,
     COUNT(i.item_id) AS total_count,
@@ -8,7 +8,7 @@ FROM media_items i
 JOIN media_types t ON i.type_id = t.type_id
 GROUP BY t.type_name;
 
--- 2. Top 10 legmagasabbra értékelt produkció (legalább 500 szavazattal)
+-- 2. Top 10 highest-rated titles with at least 500 votes
 SELECT
     i.title,
     t.type_name,
@@ -22,7 +22,7 @@ WHERE i.vote_count >= 500
 ORDER BY i.vote_average DESC, i.vote_count DESC
 LIMIT 10;
 
--- 3. Legnépszerűbb eredeti nyelvek és átlagos értékelésük
+-- 3. Most common original languages and their average ratings
 SELECT
     original_language,
     COUNT(*) AS title_count,

@@ -8,18 +8,17 @@ load_dotenv()
 
 
 def run_etl(csv_path):
-    # 1. Extract: CSV beolvasása a beépített csv modullal
+    # 1. Extract: Read CSV file safely using Python's built-in csv module
     with open(csv_path, mode='r', encoding='utf-8', errors='replace') as f:
         reader = csv.DictReader(f)
-        # Oszlopnevek megtisztítása a felesleges szóközöktől
         cleaned_rows = []
         for row in reader:
             cleaned_rows.append({k.strip(): v for k, v in row.items() if k is not None})
         df = pd.DataFrame(cleaned_rows)
 
-    print("Beolvasott oszlopok:", list(df.columns))
+    print("Loaded columns:", list(df.columns))
 
-    # 2. Transform: Üres szövegek cseréje None-ra és évszám kezelése
+    # 2. Transform: Replace empty strings with None (SQL NULL)
     df = df.replace(r'^\s*$', None, regex=True)
     df = df.where(pd.notnull(df), None)
 
@@ -29,16 +28,15 @@ def run_etl(csv_path):
         f"port={os.getenv('DB_PORT', 5432)}"
     )
 
-    # 3. Load: Adatok feltöltése PostgreSQL-be
+    # 3. Load: Insert normalized data into PostgreSQL
     inserted_count = 0
     with psycopg.connect(conn_info) as conn:
         with conn.cursor() as cur:
             for _, row in df.iterrows():
-                # Ha nincs id vagy cím, átugorjuk a hibás sort
                 if not row.get('id') or not row.get('title'):
                     continue
 
-                # Médiatípus beszúrása vagy lekérése
+                # Insert or retrieve media type ID
                 m_type = row.get('media_type') or 'unknown'
                 cur.execute(
                     """INSERT INTO media_types (type_name) VALUES (%s)
@@ -46,9 +44,9 @@ def run_etl(csv_path):
                        RETURNING type_id;""",
                     (m_type,)
                 )
-                type_id = cur.fetchone()[0]
+                type_id = cur.fetchone()
 
-                # Évszám kinyerése biztonságosan
+                # Parse release year safely
                 raw_year = row.get('release_year')
                 release_year = None
                 if raw_year:
@@ -62,12 +60,12 @@ def run_etl(csv_path):
                     except ValueError:
                         release_year = None
 
-                # Dátum ellenőrzése (csak érvényes YYYY-MM-DD formátumot engedünk át)
+                # Validate release date format (YYYY-MM-DD)
                 r_date = row.get('release_date')
                 if r_date and len(str(r_date)) != 10:
                     r_date = None
 
-                # Számok biztonságos átalakítása
+                # Convert numeric fields safely
                 try:
                     tmdb_id = int(float(row['id']))
                     popularity = float(row['popularity']) if row.get('popularity') else None
@@ -102,7 +100,7 @@ def run_etl(csv_path):
                 )
                 inserted_count += 1
         conn.commit()
-    print(f"Siker! Betoltve {inserted_count} film es sorozat a PostgreSQL adatbazisba.")
+    print(f"Success! Loaded {inserted_count} movies and TV shows into PostgreSQL.")
 
 
 if __name__ == "__main__":
